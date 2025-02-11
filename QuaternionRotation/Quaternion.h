@@ -13,7 +13,7 @@
 // If there is no rotation, initialize the quaternion (1,0,0,0) because of
 // cos(0) = 1, sin(0) = 0
 //
-//  AUTHOR: yao xiao dong (song.ahn@gmail.com)
+//  AUTHOR: yao xiao dong
 // CREATED: 2025-02-11
 //
 // Copyright (C) 2015 yao xiao dong
