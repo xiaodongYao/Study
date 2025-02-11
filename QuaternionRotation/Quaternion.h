@@ -51,5 +51,22 @@ struct Quaternion
 	Quaternion operator*(const Quaternion& rhs) const; //multiplication
 	Quaternion operator*(const Vector3& v) const;      // conjugation for rotation
 
+	Quaternion& operator+=(const Quaternion& rhs); //addition and update
+	Quaternion& operator-=(const Quaternion& rhs); //subtraction and update
+	Quaternion& operator*=(float a); //scalar multiplication and update
+	Quaternion& operator*=(const Quaternion& rhs); //quaternion multiplication and update
 
+	bool operator==(const Quaternion& rhs) const; // exact compare, no epsilon
+	bool operator!=(const Quaternion& rhs) const; // exact compare, no epsilon
+
+	//friend functions
+	friend Quaternion operator*(float a, const Quaternion& q); //pre-multiplication
+	friend std::ostream& operator<<(std::ostream& os, const Quaternion& q);
+
+	//static functions
+	// find quaternion for rotating from v1 to v2
+	static Quaternion RotationArc(const Vector3& v1, const Vector3& v2);
+
+	//return quaternion from Euler angles (x,y) or (x,y,z)
+	//The rotation order is x->y->z
 };
