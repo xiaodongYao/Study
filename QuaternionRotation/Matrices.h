@@ -200,7 +200,7 @@ public:
 	Matrix4& rotateZ(float angle); //rotate on Z-axis with degree
 	Matrix4& scale(float scale); //uniform scale
 	Matrix4& scale(float sx, float sy, float sz); //scale by (sx, sy, sz) on each axis
-	Matrix4& lookAt(const Vector3& eye, const Vector3& center, const Vector3& up); //face object to the target direction
+	Matrix4& lookAt(float tx, float ty, float tz);   // face object to the target direction
 	Matrix4& lookAt(float tx, float ty, float tz, float ux, float uy, float uz);
 	Matrix4& lookAt(const Vector3& target);
 	Matrix4& lookAt(const Vector3& target, const Vector3& up);
