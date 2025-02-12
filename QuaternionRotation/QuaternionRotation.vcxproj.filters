@@ -21,6 +21,12 @@
     <ClCompile Include="Matrices.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="animUtils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vectors.h">
@@ -30,6 +36,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Quaternion.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="animUtils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

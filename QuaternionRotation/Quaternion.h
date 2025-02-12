@@ -59,14 +59,268 @@ struct Quaternion
 	bool operator==(const Quaternion& rhs) const; // exact compare, no epsilon
 	bool operator!=(const Quaternion& rhs) const; // exact compare, no epsilon
 
-	//friend functions
+	// friend functions
 	friend Quaternion operator*(float a, const Quaternion& q); //pre-multiplication
 	friend std::ostream& operator<<(std::ostream& os, const Quaternion& q);
 
-	//static functions
+	// static functions
 	// find quaternion for rotating from v1 to v2
-	static Quaternion RotationArc(const Vector3& v1, const Vector3& v2);
+	static Quaternion getQuaternion(const Vector3& v1, const Vector3& v2);
 
-	//return quaternion from Euler angles (x,y) or (x,y,z)
-	//The rotation order is x->y->z
+	// return quaternion from Euler angles (x,y) or (x,y,z) //欧拉角转换成四元数
+	// The rotation order is x->y->z  
+	static Quaternion getQuaternion(const Vector2& angles);
+	static Quaternion getQuaternion(const Vector3& angles);
 };
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// inline functions for Quaternion
+///////////////////////////////////////////////////////////////////////////////
+
+inline Quaternion::Quaternion(const Vector3& axis, float angle)
+{
+	//angle is radian
+	Set(axis, angle);
+}
+
+inline void Quaternion::Set(float s, float x, float y, float z)
+{
+	this->s = s;
+	this->x = x;
+	this->y = y;
+	this->z = z;
+}
+
+inline void Quaternion::Set(const Vector3& axis, float angle)
+{
+	// use only half angle because of double multiplication, qpq*,
+	// q at the front and its conjugate at the back
+	Vector3 v = axis;
+	v.Normalize();
+	float sine = sinf(angle);
+	s = cos(sine);
+	x = v.x * sine;
+	y = v.y * sine;
+	z = v.z * sine;
+}
+
+inline float Quaternion::length() const
+{
+	return sqrt(s * s + x * x + y * y + z * z);
+}
+
+inline Quaternion& Quaternion::normalize()
+{
+	const float EPSILON = 0.00001f;
+	float d = s * s + x * x + y * y + z * z;
+	if (d < EPSILON)
+		return *this; // do nothing if it is zero
+
+	float invLength = 1.0f / sqrtf(d);
+	s *= invLength;  x *= invLength;  y *= invLength;  z *= invLength;
+	return *this;
+}
+
+inline Quaternion& Quaternion::conjugate()
+{
+	x = -x;  y = -y;  z = -z;
+	return *this;
+}
+
+inline Quaternion& Quaternion::invert()
+{
+	const float EPSILON = 0.00001f;
+	float d = s * s + x * x + y * y + z * z;
+	if (d < EPSILON)
+		return *this; // do nothing if it is zero
+
+	Quaternion q = *this;
+	*this = q.conjugate() * (1.0f / d); // q* / |q||q|
+	return *this;
+}
+
+inline Matrix4 Quaternion::getMatrix() const 
+{
+	// NOTE: assume the quaternion is unit length
+	// compute common values
+	float x2 = x + x;
+	float y2 = y + y;
+	float z2 = z + z;
+	float xx2 = x * x2;
+	float xy2 = x * y2;
+	float xz2 = x * z2;
+	float yy2 = y * y2;
+	float yz2 = y * z2;
+	float zz2 = z * z2;
+	float sx2 = s * x2;
+	float sy2 = s * y2;
+	float sz2 = s * z2;
+
+	// build 4x4 matrix (column-major) and return
+	return Matrix4(	1 - (yy2 + zz2), xy2 + sz2, xz2 - sy2, 0, // column 0
+					xy2 - sz2, 1 - (xx2 + zz2), yz2 + sx2, 0, // column 1
+					xz2 + sy2, yz2 - sx2, 1 - (xx2 + yy2), 0, // column 2
+					0, 0, 0, 1);// column 3
+
+	// for non-unit quaternion
+	// ss+xx-yy-zz, 2xy+2sz,     2xz-2sy,     0
+	// 2xy-2sz,     ss-xx+yy-zz, 2yz-2sx,     0
+	// 2xz+2sy,     2yz+2sx,     ss-xx-yy+zz, 0
+	// 0,           0,           0,           1
+}
+
+
+inline Vector3 Quaternion::getVector() const 
+{
+	return Vector3(x, y, z);
+}
+
+inline Quaternion Quaternion::operator-() const
+{
+	return Quaternion(-s, -x, -y, -z);
+}
+
+inline Quaternion Quaternion::operator+(const Quaternion& rhs) const
+{
+	return Quaternion(s + rhs.s, x + rhs.x, y + rhs.y, z + rhs.z);
+}
+
+inline Quaternion Quaternion::operator-(const Quaternion& rhs) const
+{
+	return Quaternion(s - rhs.s, x - rhs.x, y - rhs.y, z - rhs.z);
+}
+
+inline Quaternion Quaternion::operator*(float a) const
+{
+	return Quaternion(s * a, x * a, y * a, z * a);
+}
+
+inline Quaternion Quaternion::operator*(const Quaternion& rhs) const
+{
+	// qq' = [s,v] * [s',v'] = [(ss' - v . v'), v x v' + sv' + s'v]
+	//NOTE: quaternion multiplication is not commutative
+	Vector3 v1(x, y, z);                            // vector part of q
+	Vector3 v2(rhs.x, rhs.y, rhs.z);                // vector part of q'
+
+	Vector3 cross = v1.cross(v2);                   // v x v' (cross product)
+	float dot = v1.dot(v2);                         // v . v' (inner product)
+	Vector3 v3 = cross + (s * v2) + (rhs.s * v1);   // v x v' + sv' + s'v
+
+	return Quaternion(s * rhs.s - dot, v3.x, v3.y, v3.z);
+}
+
+inline Quaternion Quaternion::operator*(const Vector3& v) const
+{
+	Quaternion q(0, x, y, z);
+	return *this * q;
+}
+
+inline Quaternion& Quaternion::operator+=(const Quaternion& rhs)
+{
+	s += rhs.s;  x += rhs.x;  y += rhs.y;  z += rhs.z;
+	return *this;
+}
+
+inline Quaternion& Quaternion::operator-=(const Quaternion& rhs)
+{
+	s -= rhs.s;  x -= rhs.x;  y -= rhs.y;  z -= rhs.z;
+	return *this;
+}
+
+inline Quaternion& Quaternion::operator*=(float a)
+{
+	s *= a;  x *= a;  y *= a;  z *= a;
+	return *this;
+}
+
+inline Quaternion& Quaternion::operator*=(const Quaternion& rhs)
+{
+	*this = *this * rhs;
+	return *this;
+}
+
+inline bool Quaternion::operator==(const Quaternion& rhs) const
+{
+	// exact comparison
+	return (s == rhs.s) && (x == rhs.x) && (y == rhs.y) && (z == rhs.z);
+}
+
+inline bool Quaternion::operator!=(const Quaternion& rhs) const
+{
+	// exact comparison
+	return (s != rhs.s) || (x != rhs.x) || (y != rhs.y) || (z != rhs.z);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// static functions
+///////////////////////////////////////////////////////////////////////////////
+
+// find quaternion for rotating from v1 to v2
+inline  Quaternion Quaternion::getQuaternion(const Vector3& v1, const Vector3& v2)
+{
+	const float EPSILON = 0.001f;
+	const float HALF_PI = acosf(-1.0f) * 0.5f;
+
+	// if two vectors are equal return the vector with 0 rotation
+	if (v1.equal(v2, EPSILON))
+	{
+		return Quaternion(v1, 0);
+	}
+	// if two vectors are opposite return a perpendicular vector with 180 angle
+	else if (v1.equal(-v2, EPSILON))
+	{
+		Vector3 v;
+		if (v1.x > -EPSILON && v1.x < EPSILON)       // if x ~= 0
+			v.Set(1, 0, 0);
+		else if (v1.y > -EPSILON && v1.y < EPSILON)  // if y ~= 0
+			v.Set(0, 1, 0);
+		else                                        // if z ~= 0
+			v.Set(0, 0, 1);
+		return Quaternion(v, HALF_PI);
+	}
+
+	Vector3 u1 = v1;                    // convert to normal vector
+	Vector3 u2 = v2;
+	u1.Normalize();
+	u2.Normalize();
+
+	Vector3 v = u1.cross(u2);           // compute rotation axis
+	float angle = acosf(u1.dot(u2));    // rotation angle
+	return Quaternion(v, angle * 0.5f); // half angle
+}
+
+// find quaternion from 2D rotation angle (ax, ay)
+inline Quaternion Quaternion::getQuaternion(const Vector2& angles)
+{
+	Quaternion qx = Quaternion(Vector3(1, 0, 0), angles.x);   // rotate along X
+	Quaternion qy = Quaternion(Vector3(0, 1, 0), angles.y);   // rotate along Y
+	return qx * qy; // order: y->x
+}
+
+// find quaternion from 3D rotation angles (ax, ay, az)
+inline Quaternion Quaternion::getQuaternion(const Vector3& angles)
+{
+	Quaternion qx = Quaternion(Vector3(1, 0, 0), angles.x);   // rotate along X
+	Quaternion qy = Quaternion(Vector3(0, 1, 0), angles.y);   // rotate along Y
+	Quaternion qz = Quaternion(Vector3(0, 0, 1), angles.z);   // rotate along Z
+	return qx * qy * qz; // order: z->y->x
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// friend functions
+///////////////////////////////////////////////////////////////////////////////
+
+// a * q (scalar * quat)
+inline Quaternion operator*(float a, const Quaternion& q)
+{
+	return Quaternion(a * q.s, a * q.x, a * q.y, a * q.z);
+}
+
+inline std::ostream& operator<<(std::ostream& os, const Quaternion& q)
+{
+	os << "[" << q.s << ", " << q.x << ", " << q.y << ", " << q.z << "]";
+	return os;
+}
