@@ -50,7 +50,7 @@ Vector3 Gil::slerp(const Vector3& from, const Vector3& to, float alpha, Animatio
 	float invSine = 1.0f / sinf(angle);
 
 	// compute the scale factors
-	float scale1 = sinf((1.0f - t) * angle) * invSine;
+	float scale1 = sinf((1 - t) * angle) * invSine;
 	float scale2 = sinf(t * angle) * invSine;
 
 	// compute slerp-ed vector

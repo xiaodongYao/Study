@@ -68,13 +68,14 @@ namespace Gil
 		}
 
 		bool done = false;
-		vec = to - from;
-		float length1 = vec.Length();
 
-		vec.Normalize();
+		vec = to - from;
+		float length1 = vec.length();
+
+		vec.normalize();
 		float distance = elapsedTime * speed;
 		vec *= distance;
-		float length2 = vec.Length();
+		float length2 = vec.length();
 
 		vec = from + vec;
 		if (length2 > length1)
@@ -104,6 +105,7 @@ namespace Gil
 		//const float PI = 3.141593f;
 		//const float HALF_PI = 3.141593f * 0.5f;
 
+		// recompute alpha based on animation mode
 		if (mode == EASE_IN)
 		{
 			//@@alpha = 1 - cosf(HALF_PI * alpha);
@@ -112,36 +114,36 @@ namespace Gil
 		}
 		else if (mode == EASE_IN2)
 		{
-			alpha = 1.0f - sqrtf(1.0f - alpha * alpha);
+			alpha = 1 - sqrtf(1 - alpha * alpha);
 		}
 		else if (mode == EASE_OUT)
 		{
 			//@@alpha = sinf(HALF_PI * alpha);
 			// with cubic function
-			float beta = 1.0f - alpha;
-			alpha = 1.0f - beta * beta * beta;
+			float beta = 1 - alpha;
+			alpha = 1 - beta * beta * beta;
 		}
 		else if (mode == EASE_OUT2)
 		{
-			alpha = sqrtf(1.0f - (1.0f - alpha) * (1.0f - alpha));
+			alpha = sqrtf(1 - (1 - alpha) * (1 - alpha));
 		}
 		else if (mode == EASE_IN_OUT)
 		{
 			//@@alpha = 0.5f * (1 - cosf(PI * alpha));
 			// with cubic function
-			float beta = 1.0f - alpha;
+			float beta = 1 - alpha;
 			float scale = 4.0f;     // 0.5 / (0.5^3)
 			if (alpha < 0.5f)
 				alpha = alpha * alpha * alpha * scale;
 			else
-				alpha = 1.0f - (beta * beta * beta * scale);
+				alpha = 1 - (beta * beta * beta * scale);
 		}
 		else if (mode == EASE_IN_OUT2)
 		{
 			if (alpha < 0.5f)
-				alpha = 0.5f * (1.0f - sqrtf(1.0f - alpha * alpha));
+				alpha = 0.5f * (1 - sqrtf(1 - alpha * alpha));
 			else
-				alpha = 0.5f * sqrtf(1.0f - (1.0f - alpha) * (1.0f - alpha)) + 0.5f;
+				alpha = 0.5f * sqrtf(1 - (1 - alpha) * (1 - alpha)) + 0.5f;
 		}
 		else if (mode == BOUNCE)
 		{
