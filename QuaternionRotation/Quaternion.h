@@ -100,7 +100,7 @@ inline void Quaternion::Set(const Vector3& axis, float angle)
 	Vector3 v = axis;
 	v.Normalize();
 	float sine = sinf(angle);
-	s = cos(sine);
+	s = cosf(angle);
 	x = v.x * sine;
 	y = v.y * sine;
 	z = v.z * sine;
